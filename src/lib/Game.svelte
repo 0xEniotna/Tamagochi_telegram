@@ -6,12 +6,12 @@
   import type { PetStats } from './types';
   import type { SessionAccountInterface } from '@argent/tma-wallet';
   import { ArgentTMA } from '@argent/tma-wallet';
-  import { TAMAGOCHI_ADDRESS } from '../constants';
   import artifact from '../utils/contracts/abi/tamago_Tamagochi.contract_class.json';
   import toast from 'svelte-french-toast';
 
   const ABI = artifact.abi;
-
+  const TAMAGOCHI_ADDRESS = import.meta.env.VITE_TAMAGOCHI_CONTRACT_ADDRESS;
+  
   export const argentTMA = ArgentTMA.init({
     environment: 'sepolia',
     appName: 'Tamagochi Test',
