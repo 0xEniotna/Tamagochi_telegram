@@ -8,7 +8,8 @@
   import { ArgentTMA } from '@argent/tma-wallet';
   import artifact from '../utils/contracts/abi/tamago_Tamagochi.contract_class.json';
   import toast from 'svelte-french-toast';
-
+  import { executeTransaction } from '../utils/contracts/contracts';
+  
   const ABI = artifact.abi;
   const TAMAGOCHI_ADDRESS = import.meta.env.VITE_TAMAGOCHI_CONTRACT_ADDRESS;
   
@@ -68,7 +69,7 @@
       }
 
       contract = new Contract(ABI, TAMAGOCHI_ADDRESS, account as unknown as AccountInterface);
-
+      contract.connect(account as unknown as AccountInterface);
       isConnected = true;
 
       await updateStats();
@@ -122,14 +123,19 @@
     if (!contract || !isConnected) return;
     try {
       isLoading = true;
-      const tx = await contract.feed();
-      toast.promise(tx.wait(), {
+      const transactionPromise = executeTransaction('feed', [], contract, account as unknown as AccountInterface, argentTMA);
+    
+      toast.promise(transactionPromise, {
         loading: 'Feeding pet...',
         success: 'Pet has been fed! 🍖',
         error: 'Failed to feed pet 😕',
-      });
-      await tx.wait();
+      }
+    );
+
+    const receipt = await transactionPromise;
+    if (receipt?.isSuccess) {
       await updateStats();
+    }
     } catch (error) {
       console.error(`Error performing feed:`, error);
       toast.error('Failed to feed pet 😕');
@@ -142,14 +148,18 @@
     if (!contract || !isConnected) return;
     try {
       isLoading = true;
-      const tx = await contract.play();
-      toast.promise(tx.wait(), {
+      const transactionPromise = executeTransaction('play', [], contract, account as unknown as AccountInterface, argentTMA);
+        
+      toast.promise(transactionPromise, {
         loading: 'Playing with pet...',
         success: 'Pet has been played with! 🎮',
         error: 'Failed to play with pet 😕',
       });
-      await tx.wait();
-      await updateStats();
+
+      const receipt = await transactionPromise;
+      if (receipt?.isSuccess) {
+        await updateStats();
+      }
     } catch (error) {
       console.error(`Error performing play:`, error);
       toast.error('Failed to play with pet 😕');
@@ -162,14 +172,18 @@
     if (!contract || !isConnected) return;
     try {
       isLoading = true;
-      const tx = await contract.rest();
-      toast.promise(tx.wait(), {
+      const transactionPromise = executeTransaction('rest', [], contract, account as unknown as AccountInterface, argentTMA);
+        
+      toast.promise(transactionPromise, {
         loading: 'Resting pet...',
         success: 'Pet has been rested! 💤',
         error: 'Failed to rest pet 😕',
       });
-      await tx.wait();
-      await updateStats();
+
+      const receipt = await transactionPromise;
+      if (receipt?.isSuccess) {
+        await updateStats();
+      }
     } catch (error) {
       console.error(`Error performing rest:`, error);
       toast.error('Failed to rest pet 😕');
@@ -182,14 +196,18 @@
     if (!contract || !isConnected) return;
     try {
       isLoading = true;
-      const tx = await contract.test_set_stats_to_half();
-      toast.promise(tx.wait(), {
+      const transactionPromise = executeTransaction('test_set_stats_to_half', [], contract, account as unknown as AccountInterface, argentTMA);
+        
+      toast.promise(transactionPromise, {
         loading: 'Resetting stats...',
         success: 'Stats have been reset! 🔄',
         error: 'Failed to reset stats 😕',
       });
-      await tx.wait();
-      await updateStats();
+
+      const receipt = await transactionPromise;
+      if (receipt?.isSuccess) {
+        await updateStats();
+      }
     } catch (error) {
       console.error(`Error performing reset stats:`, error);
       toast.error('Failed to reset stats 😕');
@@ -201,7 +219,7 @@
 
 <div class="min-h-screen bg-gray-100 px-4 py-8">
   <div class="mx-auto max-w-md rounded-xl bg-white p-6 shadow-lg">
-    <h1 class="mb-6 text-center text-2xl font-bold">My Tamagochi</h1>
+    <h1 class="mb-6 text-center text-2xl font-bold text-black">My Tamagochi</h1>
 
     {#if !isConnected}
       <div class="flex justify-center">
