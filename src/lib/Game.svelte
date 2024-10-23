@@ -31,6 +31,10 @@
           contract: TAMAGOCHI_ADDRESS,
           selector: 'rest',
         },
+        {
+          contract: TAMAGOCHI_ADDRESS,
+          selector: 'test_set_stats_to_half',
+        },
       ],
       validityDays: 90, // session validity (in days) - default: 90
     },
@@ -214,7 +218,7 @@
         Account address: <code>{account?.address.slice(0, 6)}...{account?.address.slice(-4)}</code>
       </button>
       <Tamagochi {...stats} />
-      <Buttons onFeed={handleFeed} onPlay={handlePlay} onRest={handleRest} onResetStats={handleResetStats} />
+      <Buttons onFeed={handleFeed} onPlay={handlePlay} onRest={handleRest} onResetStats={handleResetStats} isLoading={isLoading} />
     {/if}
   </div>
 </div>
