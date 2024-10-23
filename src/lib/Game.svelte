@@ -70,6 +70,7 @@
 
       contract = new Contract(ABI, TAMAGOCHI_ADDRESS, account as unknown as AccountInterface);
       contract.connect(account as unknown as AccountInterface);
+      
       isConnected = true;
 
       await updateStats();
@@ -133,7 +134,7 @@
     );
 
     const receipt = await transactionPromise;
-    if (receipt?.isSuccess) {
+    if (receipt?.isSuccess()) {
       await updateStats();
     }
     } catch (error) {
@@ -157,7 +158,7 @@
       });
 
       const receipt = await transactionPromise;
-      if (receipt?.isSuccess) {
+      if (receipt?.isSuccess()) {
         await updateStats();
       }
     } catch (error) {
@@ -181,7 +182,7 @@
       });
 
       const receipt = await transactionPromise;
-      if (receipt?.isSuccess) {
+      if (receipt?.isSuccess()) {
         await updateStats();
       }
     } catch (error) {
@@ -205,12 +206,11 @@
       });
 
       const receipt = await transactionPromise;
-      if (receipt?.isSuccess) {
+      if (receipt?.isSuccess()) {
         await updateStats();
       }
     } catch (error) {
       console.error(`Error performing reset stats:`, error);
-      toast.error('Failed to reset stats 😕');
     } finally {
       isLoading = false;
     }
