@@ -173,6 +173,26 @@
       isLoading = false;
     }
   }
+
+  async function handleResetStats() {
+    if (!contract || !isConnected) return;
+    try {
+      isLoading = true;
+      const tx = await contract.test_set_stats_to_half();
+      toast.promise(tx.wait(), {
+        loading: 'Resetting stats...',
+        success: 'Stats have been reset! 🔄',
+        error: 'Failed to reset stats 😕',
+      });
+      await tx.wait();
+      await updateStats();
+    } catch (error) {
+      console.error(`Error performing reset stats:`, error);
+      toast.error('Failed to reset stats 😕');
+    } finally {
+      isLoading = false;
+    }
+  }
 </script>
 
 <div class="min-h-screen bg-gray-100 px-4 py-8">
@@ -194,7 +214,7 @@
         Account address: <code>{account?.address.slice(0, 6)}...{account?.address.slice(-4)}</code>
       </button>
       <Tamagochi {...stats} />
-      <Buttons onFeed={handleFeed} onPlay={handlePlay} onRest={handleRest} />
+      <Buttons onFeed={handleFeed} onPlay={handlePlay} onRest={handleRest} onResetStats={handleResetStats} />
     {/if}
   </div>
 </div>
