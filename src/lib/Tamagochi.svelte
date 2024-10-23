@@ -10,31 +10,29 @@
 
   $: averageStats = (hunger + happiness + energy) / 3;
 
-  $: petImage =
-    averageStats > 70 ? happyPet : averageStats > 40 ? neutralPet : sadPet;
+  $: petImage = averageStats > 70 ? happyPet : averageStats > 40 ? neutralPet : sadPet;
 
-  $: petMood =
-    averageStats > 70 ? 'happy' : averageStats > 40 ? 'neutral' : 'sad';
+  $: petMood = averageStats > 70 ? 'happy' : averageStats > 40 ? 'neutral' : 'sad';
 </script>
 
 <div class="flex flex-col items-center justify-center p-4">
   <img
     src={petImage}
     alt="Pet {petMood}"
-    class="w-48 h-48 object-contain transition-all duration-300 hover:scale-110"
+    class="h-48 w-48 object-contain transition-all duration-300 hover:scale-110"
   />
 
   <!-- Stats Bars -->
-  <div class="w-full max-w-sm space-y-2 mt-4">
+  <div class="mt-4 w-full max-w-sm space-y-2">
     <!-- Hunger Bar -->
     <div>
-      <div class="flex justify-between text-sm mb-1">
+      <div class="mb-1 flex justify-between text-sm">
         <span>Hunger</span>
         <span>{hunger}%</span>
       </div>
-      <div class="w-full bg-gray-200 rounded-full h-2.5">
+      <div class="h-2.5 w-full rounded-full bg-gray-200">
         <div
-          class="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+          class="h-2.5 rounded-full bg-blue-600 transition-all duration-300"
           style="width: {hunger}%"
         />
       </div>
@@ -42,13 +40,13 @@
 
     <!-- Happiness Bar -->
     <div>
-      <div class="flex justify-between text-sm mb-1">
+      <div class="mb-1 flex justify-between text-sm">
         <span>Happiness</span>
         <span>{happiness}%</span>
       </div>
-      <div class="w-full bg-gray-200 rounded-full h-2.5">
+      <div class="h-2.5 w-full rounded-full bg-gray-200">
         <div
-          class="bg-green-600 h-2.5 rounded-full transition-all duration-300"
+          class="h-2.5 rounded-full bg-green-600 transition-all duration-300"
           style="width: {happiness}%"
         />
       </div>
@@ -56,13 +54,13 @@
 
     <!-- Energy Bar -->
     <div>
-      <div class="flex justify-between text-sm mb-1">
+      <div class="mb-1 flex justify-between text-sm">
         <span>Energy</span>
         <span>{energy}%</span>
       </div>
-      <div class="w-full bg-gray-200 rounded-full h-2.5">
+      <div class="h-2.5 w-full rounded-full bg-gray-200">
         <div
-          class="bg-yellow-600 h-2.5 rounded-full transition-all duration-300"
+          class="h-2.5 rounded-full bg-yellow-600 transition-all duration-300"
           style="width: {energy}%"
         />
       </div>

@@ -8,6 +8,7 @@
   import { ArgentTMA } from '@argent/tma-wallet';
   import { TAMAGOCHI_ADDRESS } from '../constants';
   import artifact from '../utils/contracts/abi/tamago_Tamagochi.contract_class.json';
+  import toast from 'svelte-french-toast';
 
   const ABI = artifact.abi;
 
@@ -38,7 +39,7 @@
   let account: SessionAccountInterface | undefined;
   let isConnected = false;
   let isLoading = false;
-  let contract: Contract;
+  let contract: Contract | undefined;
 
   let stats: PetStats = {
     hunger: 10,
@@ -62,11 +63,7 @@
         return;
       }
 
-      contract = new Contract(
-        ABI,
-        TAMAGOCHI_ADDRESS,
-        account as unknown as AccountInterface
-      );
+      contract = new Contract(ABI, TAMAGOCHI_ADDRESS, account as unknown as AccountInterface);
 
       isConnected = true;
 
@@ -81,6 +78,23 @@
       await argentTMA.requestConnection('tamagochi_connection');
     } catch (error) {
       console.error('Connection failed:', error);
+    }
+  }
+
+  async function handleDisconnect() {
+    try {
+      await argentTMA.clearSession();
+      // Reset all states
+      account = undefined;
+      isConnected = false;
+      contract = undefined;
+      stats = {
+        hunger: 10,
+        happiness: 10,
+        energy: 100,
+      };
+    } catch (error) {
+      console.error('Failed to disconnect:', error);
     }
   }
 
@@ -103,51 +117,82 @@
   async function handleFeed() {
     if (!contract || !isConnected) return;
     try {
+      isLoading = true;
       const tx = await contract.feed();
+      toast.promise(tx.wait(), {
+        loading: 'Feeding pet...',
+        success: 'Pet has been fed! 🍖',
+        error: 'Failed to feed pet 😕',
+      });
       await tx.wait();
       await updateStats();
     } catch (error) {
       console.error(`Error performing feed:`, error);
+      toast.error('Failed to feed pet 😕');
+    } finally {
+      isLoading = false;
     }
   }
+
   async function handlePlay() {
     if (!contract || !isConnected) return;
     try {
+      isLoading = true;
       const tx = await contract.play();
+      toast.promise(tx.wait(), {
+        loading: 'Playing with pet...',
+        success: 'Pet has been played with! 🎮',
+        error: 'Failed to play with pet 😕',
+      });
       await tx.wait();
       await updateStats();
     } catch (error) {
       console.error(`Error performing play:`, error);
+      toast.error('Failed to play with pet 😕');
+    } finally {
+      isLoading = false;
     }
   }
 
   async function handleRest() {
     if (!contract || !isConnected) return;
     try {
+      isLoading = true;
       const tx = await contract.rest();
+      toast.promise(tx.wait(), {
+        loading: 'Resting pet...',
+        success: 'Pet has been rested! 💤',
+        error: 'Failed to rest pet 😕',
+      });
       await tx.wait();
       await updateStats();
     } catch (error) {
       console.error(`Error performing rest:`, error);
+      toast.error('Failed to rest pet 😕');
+    } finally {
+      isLoading = false;
     }
   }
 </script>
 
-<div class="min-h-screen bg-gray-100 py-8 px-4">
-  <div class="max-w-md mx-auto bg-white rounded-xl shadow-lg p-6">
-    <h1 class="text-2xl font-bold text-center mb-6">My Tamagochi</h1>
+<div class="min-h-screen bg-gray-100 px-4 py-8">
+  <div class="mx-auto max-w-md rounded-xl bg-white p-6 shadow-lg">
+    <h1 class="mb-6 text-center text-2xl font-bold">My Tamagochi</h1>
 
     {#if !isConnected}
       <div class="flex justify-center">
         <button
           on:click={handleConnect}
-          class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700
-                 transition-colors"
+          class="rounded-lg bg-blue-600 px-6 py-3 text-white transition-colors
+                 hover:bg-blue-700"
         >
           Connect Wallet
         </button>
       </div>
     {:else}
+      <button on:click={handleDisconnect} class="w-full text-left">
+        Account address: <code>{account?.address.slice(0, 6)}...{account?.address.slice(-4)}</code>
+      </button>
       <Tamagochi {...stats} />
       <Buttons onFeed={handleFeed} onPlay={handlePlay} onRest={handleRest} />
     {/if}
