@@ -15,7 +15,7 @@
   
   export const argentTMA = ArgentTMA.init({
     environment: 'sepolia',
-    appName: 'Tamagochi Test',
+    appName: 'TamagochiGame',
     appTelegramUrl: import.meta.env.VITE_TELEGRAM_APP_URL,
     sessionParams: {
       allowedMethods: [
@@ -40,7 +40,7 @@
       validityDays: 90, // session validity (in days) - default: 90
     },
   });
-
+  
   let account: SessionAccountInterface | undefined;
   let isConnected = false;
   let isLoading = false;
@@ -69,7 +69,6 @@
       }
 
       contract = new Contract(ABI, TAMAGOCHI_ADDRESS, account as unknown as AccountInterface);
-      contract.connect(account as unknown as AccountInterface);
       
       isConnected = true;
 
@@ -123,94 +122,71 @@
   async function handleFeed() {
     if (!contract || !isConnected) return;
     try {
-      isLoading = true;
-      const transactionPromise = executeTransaction('feed', [], contract, account as unknown as AccountInterface, argentTMA);
-    
-      toast.promise(transactionPromise, {
-        loading: 'Feeding pet...',
-        success: 'Pet has been fed! 🍖',
-        error: 'Failed to feed pet 😕',
-      }
-    );
-
-    const receipt = await transactionPromise;
-    if (receipt?.isSuccess()) {
-      await updateStats();
-    }
-    } catch (error) {
-      console.error(`Error performing feed:`, error);
-      toast.error('Failed to feed pet 😕');
-    } finally {
-      isLoading = false;
-    }
-  }
-
-  async function handlePlay() {
-    if (!contract || !isConnected) return;
-    try {
-      isLoading = true;
-      const transactionPromise = executeTransaction('play', [], contract, account as unknown as AccountInterface, argentTMA);
-        
-      toast.promise(transactionPromise, {
-        loading: 'Playing with pet...',
-        success: 'Pet has been played with! 🎮',
-        error: 'Failed to play with pet 😕',
-      });
-
-      const receipt = await transactionPromise;
-      if (receipt?.isSuccess()) {
+        isLoading = true;
+        const tx = await contract.feed();
+        toast.success(tx);
+        await argentTMA.provider.waitForTransaction(tx.transaction_hash);
         await updateStats();
-      }
-    } catch (error) {
-      console.error(`Error performing play:`, error);
-      toast.error('Failed to play with pet 😕');
-    } finally {
-      isLoading = false;
-    }
-  }
-
-  async function handleRest() {
-    if (!contract || !isConnected) return;
-    try {
-      isLoading = true;
-      const transactionPromise = executeTransaction('rest', [], contract, account as unknown as AccountInterface, argentTMA);
         
-      toast.promise(transactionPromise, {
-        loading: 'Resting pet...',
-        success: 'Pet has been rested! 💤',
-        error: 'Failed to rest pet 😕',
-      });
-
-      const receipt = await transactionPromise;
-      if (receipt?.isSuccess()) {
-        await updateStats();
-      }
+        toast.success('Pet has been fed! 🍖');
     } catch (error) {
-      console.error(`Error performing rest:`, error);
-      toast.error('Failed to rest pet 😕');
+        console.error(`Error performing feed:`, error);
+        toast.error('Failed to feed pet 😕');
     } finally {
-      isLoading = false;
+        isLoading = false;
     }
   }
+
+//   async function handlePlay() {
+//     if (!contract || !isConnected) return;
+//     try {
+//         isLoading = true;
+//         const tx = await contract.play();
+//         toast.success(tx);
+        
+//         await argentTMA.provider.waitForTransaction(tx.transaction_hash);
+//         await updateStats();
+        
+//         toast.success('You played with your Pet! 🎮');
+//     } catch (error) {
+//         console.error(`Error performing play:`, error);
+//         toast.error('Failed to play with your Pet 😕');
+//     } finally {
+//         isLoading = false;
+//     }
+//   }
+
+//   async function handleRest() {
+//     if (!contract || !isConnected) return;
+//     try {
+//       isLoading = true;
+//       const tx = await contract.play();
+        
+//       await argentTMA.provider.waitForTransaction(tx.transaction_hash);
+//       await updateStats();
+        
+//       toast.success('Pet is sleeping ! 🛌');
+//     }  catch (error) {
+//       console.error(`Error performing rest:`, error);
+//       toast.error('Pet is not sleeping 😕');
+//     } finally {
+//       isLoading = false;
+//     }
+//   }
 
   async function handleResetStats() {
     if (!contract || !isConnected) return;
     try {
       isLoading = true;
-      const transactionPromise = executeTransaction('test_set_stats_to_half', [], contract, account as unknown as AccountInterface, argentTMA);
-        
-      toast.promise(transactionPromise, {
-        loading: 'Resetting stats...',
-        success: 'Stats have been reset! 🔄',
-        error: 'Failed to reset stats 😕',
-      });
-
-      const receipt = await transactionPromise;
-      if (receipt?.isSuccess()) {
-        await updateStats();
-      }
+      const tx = await contract.test_set_stats_to_half();
+      
+      await argentTMA.provider.waitForTransaction(tx.transaction_hash);
+      await updateStats();
+      
+      toast.success('Stats have been reset! 🔄');
     } catch (error) {
       console.error(`Error performing reset stats:`, error);
+      toast.error('Failed to reset stats 😕');
     } finally {
       isLoading = false;
     }
@@ -236,7 +212,8 @@
         Account address: <code>{account?.address.slice(0, 6)}...{account?.address.slice(-4)}</code>
       </button>
       <Tamagochi {...stats} />
-      <Buttons onFeed={handleFeed} onPlay={handlePlay} onRest={handleRest} onResetStats={handleResetStats} isLoading={isLoading} />
+      
+      <Buttons onFeed={handleFeed} onPlay={() => {}} onRest={() => {}} onResetStats={handleResetStats} isLoading={isLoading} />
     {/if}
   </div>
 </div>
