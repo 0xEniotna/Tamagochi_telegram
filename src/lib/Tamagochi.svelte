@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
   import happyPet from '../assets/happy_doggo.png';
   import neutralPet from '../assets/neutral_doggo.png';
   import sadPet from '../assets/sad_doggo.png';
@@ -22,7 +21,7 @@
     class="h-48 w-48 object-contain transition-all duration-300 hover:scale-110"
   />
 
-  <!-- Stats Bars -->
+  <!-- Stats -->
   <div class="mt-4 w-full max-w-sm space-y-2">
     <!-- Hunger Bar -->
     <div>

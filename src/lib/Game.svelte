@@ -2,20 +2,18 @@
   import { onMount } from 'svelte';
   import Tamagochi from './Tamagochi.svelte';
   import Buttons from './Buttons.svelte';
-  import { Contract, type AccountInterface } from 'starknet';
-  import type { PetStats } from './types';
+  import { Contract, type AccountInterface, type Call } from 'starknet';
   import type { SessionAccountInterface } from '@argent/tma-wallet';
   import { ArgentTMA } from '@argent/tma-wallet';
-  import artifact from '../utils/contracts/abi/tamago_Tamagochi.contract_class.json';
+  import artifact from '../utils/abi/tamago_Tamagochi.contract_class.json';
   import toast from 'svelte-french-toast';
-  import { executeTransaction } from '../utils/contracts/contracts';
-  
+
   const ABI = artifact.abi;
   const TAMAGOCHI_ADDRESS = import.meta.env.VITE_TAMAGOCHI_CONTRACT_ADDRESS;
-  
+
   export const argentTMA = ArgentTMA.init({
     environment: 'sepolia',
-    appName: 'TamagochiGame',
+    appName: import.meta.env.VITE_TELEGRAM_APP_NAME,
     appTelegramUrl: import.meta.env.VITE_TELEGRAM_APP_URL,
     sessionParams: {
       allowedMethods: [
@@ -40,15 +38,15 @@
       validityDays: 90, // session validity (in days) - default: 90
     },
   });
-  
+
   let account: SessionAccountInterface | undefined;
   let isConnected = false;
   let isLoading = false;
   let contract: Contract | undefined;
 
-  let stats: PetStats = {
-    hunger: 10,
-    happiness: 10,
+  let stats = {
+    hunger: 100,
+    happiness: 100,
     energy: 100,
   };
 
@@ -69,7 +67,7 @@
       }
 
       contract = new Contract(ABI, TAMAGOCHI_ADDRESS, account as unknown as AccountInterface);
-      
+
       isConnected = true;
 
       await updateStats();
@@ -94,8 +92,8 @@
       isConnected = false;
       contract = undefined;
       stats = {
-        hunger: 10,
-        happiness: 10,
+        hunger: 100,
+        happiness: 100,
         energy: 100,
       };
     } catch (error) {
@@ -122,67 +120,101 @@
   async function handleFeed() {
     if (!contract || !isConnected) return;
     try {
-        isLoading = true;
-        const tx = await contract.feed();
-        toast.success(tx);
-        await argentTMA.provider.waitForTransaction(tx.transaction_hash);
-        await updateStats();
-        
-        toast.success('Pet has been fed! 🍖');
+      isLoading = true;
+      let call: Call = {
+        contractAddress: contract.address,
+        entrypoint: 'feed',
+        calldata: [],
+      };
+      const fees = await account?.estimateInvokeFee([call]);
+      // TODO - Refactor this
+      const tx = await contract.feed({
+        maxFee: fees?.suggestedMaxFee ? BigInt(fees.suggestedMaxFee) * 2n : undefined,
+      });
+      await argentTMA.provider.waitForTransaction(tx.transaction_hash);
+      await updateStats();
+      toast.success('Pet has been fed! 🍖');
     } catch (error) {
-        console.error(`Error performing feed:`, error);
-        toast.error('Failed to feed pet 😕');
+      console.error(`Error performing feed:`, error);
+      toast.error('Failed to feed pet 😕');
     } finally {
-        isLoading = false;
+      isLoading = false;
     }
   }
 
-//   async function handlePlay() {
-//     if (!contract || !isConnected) return;
-//     try {
-//         isLoading = true;
-//         const tx = await contract.play();
-//         toast.success(tx);
-        
-//         await argentTMA.provider.waitForTransaction(tx.transaction_hash);
-//         await updateStats();
-        
-//         toast.success('You played with your Pet! 🎮');
-//     } catch (error) {
-//         console.error(`Error performing play:`, error);
-//         toast.error('Failed to play with your Pet 😕');
-//     } finally {
-//         isLoading = false;
-//     }
-//   }
+  async function handlePlay() {
+    if (!contract || !isConnected) return;
+    try {
+      isLoading = true;
+      let call: Call = {
+        contractAddress: contract.address,
+        entrypoint: 'play',
+        calldata: [],
+      };
+      const fees = await account?.estimateInvokeFee([call]);
 
-//   async function handleRest() {
-//     if (!contract || !isConnected) return;
-//     try {
-//       isLoading = true;
-//       const tx = await contract.play();
-        
-//       await argentTMA.provider.waitForTransaction(tx.transaction_hash);
-//       await updateStats();
-        
-//       toast.success('Pet is sleeping ! 🛌');
-//     }  catch (error) {
-//       console.error(`Error performing rest:`, error);
-//       toast.error('Pet is not sleeping 😕');
-//     } finally {
-//       isLoading = false;
-//     }
-//   }
+      const tx = await contract.play({
+        maxFee: fees?.suggestedMaxFee ? BigInt(fees.suggestedMaxFee) * 2n : undefined,
+      });
+      toast.success(tx);
+
+      await argentTMA.provider.waitForTransaction(tx.transaction_hash);
+      await updateStats();
+
+      toast.success('You played with your Pet! 🎮');
+    } catch (error) {
+      console.error(`Error performing play:`, error);
+      toast.error('Failed to play with your Pet 😕');
+    } finally {
+      isLoading = false;
+    }
+  }
+
+  async function handleRest() {
+    if (!contract || !isConnected) return;
+    try {
+      isLoading = true;
+      let call: Call = {
+        contractAddress: contract.address,
+        entrypoint: 'rest',
+        calldata: [],
+      };
+      const fees = await account?.estimateInvokeFee([call]);
+
+      const tx = await contract.res({
+        maxFee: fees?.suggestedMaxFee ? BigInt(fees.suggestedMaxFee) * 2n : undefined,
+      });
+
+      await argentTMA.provider.waitForTransaction(tx.transaction_hash);
+      await updateStats();
+
+      toast.success('Pet is sleeping ! 🛌');
+    } catch (error) {
+      console.error(`Error performing rest:`, error);
+      toast.error('Pet is not sleeping 😕');
+    } finally {
+      isLoading = false;
+    }
+  }
 
   async function handleResetStats() {
     if (!contract || !isConnected) return;
     try {
       isLoading = true;
-      const tx = await contract.test_set_stats_to_half();
-      
+      let call: Call = {
+        contractAddress: contract.address,
+        entrypoint: 'test_set_stats_to_half',
+        calldata: [],
+      };
+      const fees = await account?.estimateInvokeFee([call]);
+
+      const tx = await contract.test_set_stats_to_half({
+        maxFee: fees?.suggestedMaxFee ? BigInt(fees.suggestedMaxFee) * 2n : undefined,
+      });
+
       await argentTMA.provider.waitForTransaction(tx.transaction_hash);
       await updateStats();
-      
+
       toast.success('Stats have been reset! 🔄');
     } catch (error) {
       console.error(`Error performing reset stats:`, error);
@@ -195,7 +227,7 @@
 
 <div class="min-h-screen bg-gray-100 px-4 py-8">
   <div class="mx-auto max-w-md rounded-xl bg-white p-6 shadow-lg">
-    <h1 class="mb-6 text-center text-2xl font-bold text-black">My Tamagochi</h1>
+    <h1 class="mb-6 text-center text-2xl font-bold text-black">My Tamagotchi</h1>
 
     {#if !isConnected}
       <div class="flex justify-center">
@@ -212,8 +244,14 @@
         Account address: <code>{account?.address.slice(0, 6)}...{account?.address.slice(-4)}</code>
       </button>
       <Tamagochi {...stats} />
-      
-      <Buttons onFeed={handleFeed} onPlay={() => {}} onRest={() => {}} onResetStats={handleResetStats} isLoading={isLoading} />
+
+      <Buttons
+        onFeed={handleFeed}
+        onPlay={handlePlay}
+        onRest={handleRest}
+        onResetStats={handleResetStats}
+        {isLoading}
+      />
     {/if}
   </div>
 </div>
