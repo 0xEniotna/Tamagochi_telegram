@@ -1,37 +1,48 @@
-import { Telegraf, Telegram } from 'telegraf';
-import * as dotenv from 'dotenv';
-dotenv.config();
-
-console.log('Starting bot setup...');
+import { Bot } from 'grammy';
+import 'dotenv/config';
 
 const token = process.env.TELEGRAM_BOT_TOKEN;
-const username = process.env.TELEGRAM_BOT_USERNAME;
-const name = process.env.TELEGRAM_BOT_NAME;
-
-if (!token || !username || !name) {
-  throw new Error('One or more bot properties are not set');
+if (!token) {
+  throw new Error('TELEGRAM_BOT_TOKEN is not set in environment variables');
 }
 
-console.log('Bot token:', token);
-console.log('Bot username:', username);
-console.log('Bot name:', name);
-
-// Create a custom Telegram instance pointing to the test network
-const telegram = new Telegram(token, {
-  apiRoot: 'https://api.test.telegram.org',
+const bot = new Bot(token, {
+  client: {
+    environment: 'test',
+  },
+  botInfo: {
+    id: parseInt(token.split(':')[0]),
+    is_bot: true,
+    first_name: 'TamagotchiTestBot',
+    username: 'TamagotchiTestBot',
+    can_join_groups: false,
+    can_read_all_group_messages: false,
+    supports_inline_queries: false,
+    can_connect_to_business: false,
+    has_main_web_app: true,
+  },
 });
 
-// Initialize Telegraf with the custom Telegram client
-const bot = new Telegraf(token, { telegram });
+bot.command('start', (ctx) => ctx.reply('Hello! Im the bot!'));
 
-// Register listeners for commands and messages
-bot.start((ctx) => ctx.reply('Welcome! Up and running.'));
-bot.on('message', (ctx) => ctx.reply('Got another message!'));
+bot.api
+  .getMe()
+  .then((botInfo) => {
+    console.log('Successfully connected to bot:', botInfo.username);
 
-// Start the bot
-bot.launch().then(() => {
-  console.log('Bot is up and running!');
-});
+    // Add commands
+    bot.command('start', (ctx) => ctx.reply('Hello! Bot is working!'));
 
-process.once('SIGINT', () => bot.stop('SIGINT'));
-process.once('SIGTERM', () => bot.stop('SIGTERM'));
+    return bot.start({
+      onStart: (info) => {
+        console.log('🤖 Bot started as @' + info.username);
+      },
+    });
+  })
+  .catch((err) => {
+    console.error('Connection error:', err.message);
+    if (err.description) {
+      console.error('Error description:', err.description);
+    }
+    process.exit(1);
+  });
